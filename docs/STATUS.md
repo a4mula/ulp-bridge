@@ -8,7 +8,7 @@
 
 **Last updated:** 2026-09-15
 
-**Session:** Bootstrap (L — Local agent)
+**Session:** Onboarding + first delegation (P — cloud agent)
 
 ---
 
@@ -22,43 +22,33 @@
 - [x] Publisher script created: `scripts/ping.sh`
 - [x] Cold-boot prompt written: `docs/COLD_BOOT_PROMPT.md`
 - [x] Audit log initialized: `docs/audit-log.md`
+- [x] Cloud agent PAT generated (fine-grained, scoped to ulp-bridge repo only)
+- [x] Cloud agent topic pasted into `docs/COLD_BOOT_PROMPT.md` (boot-time secret sections defined)
+- [x] P (Project Lead) booted with cold-boot prompt — rehydrated from repo state
+- [x] P review of bridge complete (see issue #1 close comment): watcher reconnect typo found, opencode stub confirmed, missing `docs/NTFY.md` added, cold-boot prompt template revised, protocol labels created
+- [x] First task delegation from P to L: **TASK-002** (issue #2), `new-task` ping sent 2026-09-15T04:52:06Z (ntfy id 1kBaNLjGLwGE)
 
 ---
 
 ## Pending
 
-- [ ] Cloud agent PAT generated (fine-grained, scoped to ulp-bridge repo only)
-- [ ] User added as collaborator to ulp-bridge repo (token lacks permission — manual step)
-- [ ] Cloud agent PAT pasted into `docs/COLD_BOOT_PROMPT.md`
-- [ ] Cloud agent topic pasted into `docs/COLD_BOOT_PROMPT.md`
-- [ ] P (Project Lead) booted with cold-boot prompt
-- [ ] First task delegation from P to L
-
----
-
-## What P Should Do First
-
-1. Copy `docs/COLD_BOOT_PROMPT.md`
-2. Fill in the PAT from `~/.ulp/bridge-cloud.token`
-3. Fill in the topic from `~/.ulp/bridge-ntfy.topic`
-4. Paste the whole file into chat with P
-5. P will rehydrate from STATUS.md and open issues
-6. P will begin task decomposition and delegation
+- [ ] L executes TASK-002: fix `watch.py` reconnect URL typo (`ntty.sh`), implement real opencode invocation, harden stream loop — spec: `docs/tasks/TASK-002.md`
+- [ ] P reviews TASK-002 PR (squash-merge per PROTOCOL.md §4)
+- [ ] User added as collaborator to ulp-bridge repo (bootstrap token lacked permission — revisit if still needed)
+- [ ] End-to-end live test: P ping → watcher wakes → opencode runs on User's machine (blocked until TASK-002 lands)
 
 ---
 
 ## Known Limitations
 
-- Token used for bootstrap lacks `create_repository` and `add_collaborators` permissions
-- Watcher script is a prototype — opencode invocation is logged but not actually executed
+- `scripts/watch.py` opencode invocation is a stub until TASK-002 merges — pings are logged, not acted on
+- No GitHub polling fallback yet (ntfy stream only)
 - No CI/CD pipeline yet (lightweight resource constraints)
 
 ---
 
 ## Next Steps
 
-1. User generates fine-grained PAT for cloud agent (scoped to ulp-bridge only)
-2. User adds themselves as collaborator to ulp-bridge repo
-3. User pastes PAT and topic into COLD_BOOT_PROMPT.md
-4. User boots P with the cold-boot prompt
-5. P begins real work delegation
+1. User runs/relays L on User's machine: read issue #2 + `docs/tasks/TASK-002.md`, branch `task-002-watcher-fix`, PR with `Closes #2`
+2. P reviews and squash-merges; pings `pr-ready` / `blocked` per PROTOCOL.md §3
+3. End-to-end live test of the wake-up channel
