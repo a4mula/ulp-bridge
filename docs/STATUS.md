@@ -38,6 +38,7 @@
 ## Pending
 
 - [ ] **User restarts the watcher on the local machine with merged code** — `git pull && python3 scripts/watch.py` (first run can be `--dry-run` to watch it process pings)
+- [ ] Live wake test after cursor hotfix: P sends a real ping → opencode invokes on User's machine
 - [ ] End-to-end live test: P sends a real `new-task` ping → watcher wakes → opencode acts on L's machine (the loop runs with no manual relay)
 - [ ] Proposed **TASK-003** (awaiting User approval): deploy watcher as a persistent service with auto-restart (cron/systemd/launchd) + GitHub poll fallback for ntfy outages
 - [ ] User added as collaborator to ulp-bridge repo (bootstrap token lacked permission — revisit if still needed)

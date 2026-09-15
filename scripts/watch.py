@@ -196,18 +196,24 @@ def process_message(event: dict, dry_run: bool = False) -> None:
 
     # Harden: coerce time to a float/str before converting
     ts_iso = ""
+    ts_unix = ""
     if ts:
         try:
             ts_num = float(ts)
             ts_iso = datetime.fromtimestamp(ts_num, tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+            ts_unix = str(int(ts_num))
         except (ValueError, OSError, OverflowError) as exc:
             log.warning(f"Malformed time value '{ts}': {exc}; using current time")
             ts_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+            ts_unix = str(int(datetime.now(timezone.utc).timestamp()))
     else:
         ts_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        ts_unix = str(int(datetime.now(timezone.utc).timestamp()))
 
-    # Save cursor for restart safety
-    save_cursor(ts_iso)
+    # Save cursor for restart safety.
+    # ntfy 'since' accepts unix seconds / durations / message ids — NOT ISO
+    # strings (ISO cursor → HTTP 400 on reconnect), so store unix seconds.
+    save_cursor(ts_unix)
 
     msg_type = event.get("event", "message")
     # ntfy /json stream carries the published body in 'message' (not 'data')
@@ -303,6 +309,27 @@ def connect_stream(topic: str, since: Optional[str] = None, dry_run: bool = Fals
 # ---------------------------------------------------------------------------
 
 
+def _valid_since(cursor: Optional[str]) -> Optional[str]:
+    """Sanitize the stored cursor into a value ntfy's 'since' accepts.
+
+    ntfy accepts unix seconds, durations (e.g. 30m), message ids, or 'all' —
+    NOT ISO strings (HTTP 400). Old cursors stored as ISO are converted to
+    unix seconds; garbage is dropped (restart from 'all').
+    """
+    if not cursor:
+        return None
+    if cursor.isdigit():
+        return cursor
+    try:
+        dt = datetime.fromisoformat(cursor.replace("Z", "+00:00"))
+        converted = str(int(dt.timestamp()))
+        log.info(f"Converted legacy ISO cursor {cursor} → unix {converted}")
+        return converted
+    except ValueError:
+        log.warning(f"Ignoring unparseable cursor '{cursor}' — starting from 'all'")
+        return None
+
+
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(description="ULP Bridge Watcher")
@@ -320,6 +347,7 @@ def main():
 
     topic = get_topic()
     cursor = get_cursor()
+    since = _valid_since(cursor)
 
     log.info(f"ULP Bridge Watcher starting")
     log.info(f"Topic: {topic}")
@@ -328,7 +356,7 @@ def main():
         log.info("Running in DRY-RUN mode — no opencode invocations will occur")
 
     # Connect to ntfy stream
-    connect_stream(topic, since=cursor, dry_run=args.dry_run)
+    connect_stream(topic, since=since, dry_run=args.dry_run)
 
 
 if __name__ == "__main__":
