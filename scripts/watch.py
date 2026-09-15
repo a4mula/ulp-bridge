@@ -210,7 +210,8 @@ def process_message(event: dict, dry_run: bool = False) -> None:
     save_cursor(ts_iso)
 
     msg_type = event.get("event", "message")
-    data = event.get("data", "")
+    # ntfy /json stream carries the published body in 'message' (not 'data')
+    data = event.get("message") or event.get("data") or ""
 
     try:
         payload = json.loads(data) if data else {}
@@ -248,10 +249,14 @@ def process_message(event: dict, dry_run: bool = False) -> None:
 
 
 def _build_url(topic: str, since: Optional[str] = None) -> str:
-    """Build the ntfy stream URL using the canonical NTFY_URL constant."""
+    """Build the ntfy stream URL using the canonical NTFY_URL constant.
+
+    ntfy's ndjson subscribe endpoint is /json (there is no /stream path —
+    it returns 404); ping payloads arrive in the 'message' field.
+    """
     if since:
-        return f"{NTFY_URL}/{topic}/stream?since={since}"
-    return f"{NTFY_URL}/{topic}/stream?since=all"
+        return f"{NTFY_URL}/{topic}/json?since={since}"
+    return f"{NTFY_URL}/{topic}/json?since=all"
 
 
 def connect_stream(topic: str, since: Optional[str] = None, dry_run: bool = False) -> None:
