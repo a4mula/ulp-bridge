@@ -16,6 +16,7 @@ import shutil
 import signal
 import subprocess
 import sys
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -35,6 +36,11 @@ CURSOR_FILE = CONFIG_DIR / "watcher.cursor"
 AUDIT_LOG = Path(__file__).resolve().parent.parent / "docs" / "audit-log.md"
 
 NTFY_URL = "https://ntfy.sh"
+
+# opencode invocation timeout (seconds). Local models doing agentic runs are
+# slow — 120s was empirically far too short. Override at runtime with the
+# ULP_OC_TIMEOUT environment variable.
+OC_TIMEOUT = int(os.environ.get("ULP_OC_TIMEOUT", "900"))
 
 LOG_FORMAT = "%(asctime)s [%(levelname)s] %(message)s"
 logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
@@ -117,15 +123,17 @@ def _resolve_opencode_bin() -> Optional[Path]:
 def _post_blocked_ping(ref: str) -> None:
     """POST a blocked ping via ping.sh.
 
-    Ensures the ref is normalised to 'issue:N' form if it contains a colon
-    but doesn't already start with 'issue:', then passes it unchanged.
+    Refs pass through unchanged (pr:7, commit:abc123, ...). Only a bare
+    numeric ref is assumed to be an issue id and gets the 'issue:' prefix.
+    (The old rule prefixed EVERYTHING lacking 'issue:', which both produced
+    'issue:issue:14' and mangled 'commit:...' refs into 'issue:commit:...'.)
     """
     ping_script = Path(__file__).resolve().parent / "ping.sh"
     if not ping_script.exists():
         log.error(f"ping.sh not found at {ping_script}")
         return
 
-    if not ref.startswith("issue:"):
+    if ref.isdigit():
         ref = f"issue:{ref}"
 
     try:
@@ -144,6 +152,19 @@ def invoke_opencode(ref: str, message: str, dry_run: bool = False) -> bool:
     """Invoke opencode with the task context.
 
     Returns True on success, False on failure.
+
+    Lessons baked in after the 2026-09-15 silent-hang incident:
+    - opencode stdout/stderr are streamed live into the watcher log with an
+      '[oc:*]' prefix — capture_output() hid everything and a healthy-looking
+      invocation was indistinguishable from a dead one.
+    - The child runs in its own process group (start_new_session) and the
+      timeout kills the WHOLE group. Killing only the opencode parent can
+      leave tool-children holding our stdout/stderr pipes open, and then
+      subprocess.run() never returns from its post-kill communicate() — the
+      watcher wedges silently, no timeout log, no blocked ping.
+    - stdin is /dev/null: nothing waits on a human.
+    - Timeout defaults to 900s (local-model agentic runs are slow); override
+      with ULP_OC_TIMEOUT=<seconds>.
     """
     if dry_run:
         log.info(f"[DRY-RUN] Would invoke opencode with ref={ref}")
@@ -159,30 +180,91 @@ def invoke_opencode(ref: str, message: str, dry_run: bool = False) -> bool:
     prompt = f"P posted an update to {ref} — read it, act, report.\n\nMessage: {message}"
 
     log.info(f"Invoking opencode with ref={ref}")
+    log.info(
+        f"opencode: bin={opencode_bin} timeout={OC_TIMEOUT}s "
+        f"cwd={Path.cwd()} prompt_chars={len(prompt)}"
+    )
 
     try:
-        result = subprocess.run(
+        proc = subprocess.Popen(
             [str(opencode_bin), "run", prompt],
-            capture_output=True,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             text=True,
-            timeout=120,
+            bufsize=1,
+            start_new_session=True,  # own process group — see docstring
         )
-        if result.returncode != 0:
-            stderr = result.stderr.strip() if result.stderr else "(no stderr)"
-            log.error(f"opencode exited with code {result.returncode}: {stderr[:200]}")
-            _post_blocked_ping(ref)
-            return False
-
-        log.info("opencode invocation succeeded")
-        return True
-    except subprocess.TimeoutExpired:
-        log.error("opencode invocation timed out after 120s")
-        _post_blocked_ping(ref)
-        return False
     except Exception as exc:
-        log.error(f"opencode invocation failed: {exc}")
+        log.error(f"opencode failed to start: {exc}")
         _post_blocked_ping(ref)
         return False
+
+    def _pump(stream, tag: str) -> None:
+        try:
+            for line in stream:
+                log.info(f"[oc:{tag}] {line.rstrip()}")
+        except Exception as exc:
+            log.warning(f"[oc:{tag}] pump error: {exc}")
+        finally:
+            try:
+                stream.close()
+            except Exception:
+                pass
+
+    threads = [
+        threading.Thread(target=_pump, args=(proc.stdout, "out"), daemon=True),
+        threading.Thread(target=_pump, args=(proc.stderr, "err"), daemon=True),
+    ]
+    for t in threads:
+        t.start()
+
+    def _kill_group() -> None:
+        try:
+            os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+        except (ProcessLookupError, PermissionError) as exc:
+            log.warning(f"killpg: {exc}")
+
+    started = time.monotonic()
+    heartbeat = 0
+    timed_out = False
+    try:
+        while proc.poll() is None:
+            time.sleep(1)
+            elapsed = time.monotonic() - started
+            if elapsed >= (heartbeat + 1) * 60 and proc.poll() is None:
+                heartbeat += 1
+                log.info(f"opencode still running: {int(elapsed)}s elapsed")
+            if elapsed >= OC_TIMEOUT:
+                timed_out = True
+                log.error(
+                    f"opencode exceeded {OC_TIMEOUT}s — killing process group "
+                    f"(set ULP_OC_TIMEOUT if this task needs longer)"
+                )
+                _kill_group()
+                break
+    except BaseException:
+        # Covers SystemExit from the SIGINT/SIGTERM handler and
+        # KeyboardInterrupt — don't leave orphaned opencode trees behind.
+        log.error("watcher exiting while opencode was running — killing process group")
+        _kill_group()
+        raise
+
+    returncode = proc.wait()
+    for t in threads:
+        t.join(timeout=10)
+    elapsed = int(time.monotonic() - started)
+
+    if timed_out or returncode != 0:
+        log.error(
+            f"opencode {'timed out' if timed_out else f'exited rc={returncode}'} "
+            f"after {elapsed}s — see [oc:*] lines above for its output"
+        )
+        _post_blocked_ping(ref)
+        return False
+
+    log.info(f"opencode finished OK (rc=0, {elapsed}s)")
+    return True
 
 # ---------------------------------------------------------------------------
 # ntfy stream processing
