@@ -8,7 +8,7 @@
 
 **Last updated:** 2026-09-15
 
-**Session:** Onboarding + first delegation (P — cloud agent)
+**Session:** TASK-002 shipped (P + L, first full delegation cycle complete)
 
 ---
 
@@ -23,32 +23,38 @@
 - [x] Cold-boot prompt written: `docs/COLD_BOOT_PROMPT.md`
 - [x] Audit log initialized: `docs/audit-log.md`
 - [x] Cloud agent PAT generated (fine-grained, scoped to ulp-bridge repo only)
-- [x] Cloud agent topic pasted into `docs/COLD_BOOT_PROMPT.md` (boot-time secret sections defined)
-- [x] P (Project Lead) booted with cold-boot prompt — rehydrated from repo state
-- [x] P review of bridge complete (see issue #1 close comment): watcher reconnect typo found, opencode stub confirmed, missing `docs/NTFY.md` added, cold-boot prompt template revised, protocol labels created
-- [x] First task delegation from P to L: **TASK-002** (issue #2), `new-task` ping sent 2026-09-15T04:52:06Z (ntfy id 1kBaNLjGLwGE)
+- [x] P booted with cold-boot prompt — rehydrated from repo state
+- [x] P review of bridge complete (issue #1 closed)
+- [x] Cold-boot prompt template revised; `docs/NTFY.md` added; protocol labels created
+- [x] **TASK-002 complete** (issue #2, PR #3, squash-merged as `0479cc7`):
+  watcher now subscribes via `/json` (not the 404 `/stream`), reads ping
+  payloads from the `message` field, invokes `opencode run "<prompt>"` for
+  real, normalizes blocked-ping refs, supports `--dry-run`, hardened stream
+  loop with backoff. Verified end-to-end from P's sandbox against the live
+  topic (replayed + processed cloud pings, filtered local pings).
 
 ---
 
 ## Pending
 
-- [ ] L executes TASK-002: fix `watch.py` reconnect URL typo (`ntty.sh`), implement real opencode invocation, harden stream loop — spec: `docs/tasks/TASK-002.md`
-- [ ] P reviews TASK-002 PR (squash-merge per PROTOCOL.md §4)
+- [ ] **User restarts the watcher on the local machine with merged code** — `git pull && python3 scripts/watch.py` (first run can be `--dry-run` to watch it process pings)
+- [ ] End-to-end live test: P sends a real `new-task` ping → watcher wakes → opencode acts on L's machine (the loop runs with no manual relay)
+- [ ] Proposed **TASK-003** (awaiting User approval): deploy watcher as a persistent service with auto-restart (cron/systemd/launchd) + GitHub poll fallback for ntfy outages
 - [ ] User added as collaborator to ulp-bridge repo (bootstrap token lacked permission — revisit if still needed)
-- [ ] End-to-end live test: P ping → watcher wakes → opencode runs on User's machine (blocked until TASK-002 lands)
 
 ---
 
 ## Known Limitations
 
-- `scripts/watch.py` opencode invocation is a stub until TASK-002 merges — pings are logged, not acted on
-- No GitHub polling fallback yet (ntfy stream only)
+- Watcher still needs to be started manually on the User's machine (TASK-003 target)
+- No GitHub polling fallback yet (ntfy stream only — pings lost if ntfy is down)
 - No CI/CD pipeline yet (lightweight resource constraints)
+- P and L share the `a4mula` account, so formal GitHub review events are impossible — PR comments are the review channel
 
 ---
 
 ## Next Steps
 
-1. User runs/relays L on User's machine: read issue #2 + `docs/tasks/TASK-002.md`, branch `task-002-watcher-fix`, PR with `Closes #2`
-2. P reviews and squash-merges; pings `pr-ready` / `blocked` per PROTOCOL.md §3
-3. End-to-end live test of the wake-up channel
+1. User restarts the watcher locally (merged code)
+2. P delegates a small live test task; the full P → ntfy → watcher → opencode → PR → P loop runs hands-off
+3. On User approval: TASK-003 (persistent watcher + poll fallback)

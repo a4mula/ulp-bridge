@@ -1,5 +1,11 @@
 # TASK-002 — Fix watcher reconnect URL and implement real opencode invocation
 
+> **Post-merge correction (P, 2026-09-15):** the original spec assumed the
+> subscribe endpoint was `.../stream?since=<cursor>`. Merge review found
+> `/stream` is not a valid ntfy endpoint (404) — the ndjson endpoint is
+> **`/json`**, and ping payloads arrive in the **`message`** field, not
+> `data`. Both fixed in squash commit `0479cc7` (PR #3).
+
 | | |
 |---|---|
 | **Issue** | https://github.com/a4mula/ulp-bridge/issues/2 (label `agent:local`) |
