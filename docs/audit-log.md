@@ -130,3 +130,17 @@ Notes:
   action needed beyond awareness."
 - Bridge loop P→ntfy→watcher→opencode→(report) verified with zero human relay
   ```
+
+
+## 2026-09-15T06:22:30Z
+
+task delegation (logged by P) — TASK-003 approved by User, issue #4 opened
+
+  ```
+Issue #4: [TASK-003] Persistent watcher service + GitHub polling fallback
+Labels: agent:local
+Spec: docs/tasks/TASK-003.md (committed in the next push)
+Delivery: wave 1 = systemd user service (draft PR + pr-ready ping),
+          wave 2 = GitHub polling fallback (timer + poll_github.py)
+new-task ping follows once this push lands
+  ```
