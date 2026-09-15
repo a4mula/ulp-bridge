@@ -107,3 +107,26 @@ status → commit:32cf7dc  (sent by P — live wake test against SINGLE clean pa
   ```
 {"v":1,"from":"cloud","type":"status","ref":"commit:32cf7dc","ts":"2026-09-15T06:13:12Z"}
   ```
+
+## 2026-09-15T06:15:00Z
+
+LIVE WAKE TEST PASSED (logged by P) — first fully observable hands-off cycle
+
+  ```
+06:13:12.435Z watcher: Invoking opencode with ref=commit:32cf7dc (0.3s after ping)
+              opencode: bin=/snap/bin/opencode timeout=900s cwd=/mnt/data-tier/projects/ulp-bridge prompt_chars=122
+06:13:13     [oc:err] > build · qwen-35b-moe   (opencode banner, streamed live)
+06:14:12     heartbeat: still running 60s elapsed
+06:14:21     [oc:err] $ git log --oneline -10
+06:14:22     [oc:err] $ git show 32cf7dc --stat
+06:14:27     [oc:err] $ git diff 183dca1..32cf7dc -- scripts/watch.py
+06:14:59     [oc:out] structured review of 32cf7dc (root causes, before/after table)
+06:15:00     opencode finished OK (rc=0, 108s) — watcher idle again
+
+Notes:
+- 108s runtime vs old 120s cap: old code would have killed this run with 12s
+  of margin — the 900s default was not paranoia
+- L's final line: "Cloud ping acknowledged. Status: commit reviewed, no
+  action needed beyond awareness."
+- Bridge loop P→ntfy→watcher→opencode→(report) verified with zero human relay
+  ```

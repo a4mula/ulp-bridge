@@ -40,9 +40,10 @@
 - [ ] **User restarts the watcher on the local machine with merged code** — `git pull && python3 scripts/watch.py` (first run can be `--dry-run` to watch it process pings)
 - [x] Fresh PAT received → hotfix pushed to `origin/main` = `920af6c` (2026-09-15T05:57Z). Token stored OUTSIDE the repo tree (`~/.ulp/gh-token`, mode 600) — never committed, never enters docs/patches
 - [x] User machine findings: 2 orphaned opencode procs from the 00:33 incident found + killed; `opencode run` sanity test PASSED (`bridge alive` via qwen-35b-moe) — opencode itself healthy, silence was purely the watcher's swallowed output
-- [ ] **User: pull + restart watcher** (their clone is wherever `scripts/watch.py` lived — NOT `~/ulp-bridge`). Note: `docs/audit-log.md` is likely dirty with watcher receipt entries → `cp docs/audit-log.md /tmp/audit-bak.md`, `git checkout -- docs/audit-log.md`, `git pull` — expect replay of the 05:33 ping AND the new 05:58 ping (`commit:32cf7dc`, ntfy id `6dGEU86kHQci`), now with live `[oc:*]` streaming + heartbeats
+- [x] **LIVE WAKE TEST PASSED (2026-09-15T06:15:00Z)** — ping `nE8GUWZAbeE1` (06:13:12Z) → watcher invoked opencode in 0.3s → agentic run (git log/show/diff, 108s total, rc=0) → L posted structured review of commit 32cf7dc and acknowledged. First fully observable, hands-off P→L cycle. Watcher returned to idle cleanly after processing
+- [x] User: pull + restart done (single clean watcher; old instances swept; clone at `/mnt/data-tier/projects/ulp-bridge`)
 - [ ] End-to-end live test: P sends a real `new-task` ping → watcher wakes → opencode acts on L's machine (the loop runs with no manual relay)
-- [ ] Proposed **TASK-003** (awaiting User approval): deploy watcher as a persistent service with auto-restart (cron/systemd/launchd) + GitHub poll fallback for ntfy outages
+- [ ] Awaiting User decision: approve **TASK-003** (persistent watcher service + GitHub poll fallback) — currently the watcher only runs while a User terminal is open; closing it silences the bridge
 - [ ] User added as collaborator to ulp-bridge repo (bootstrap token lacked permission — revisit if still needed)
 
 ---
