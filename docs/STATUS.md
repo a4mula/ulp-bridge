@@ -8,7 +8,7 @@
 
 **Last updated:** 2026-09-15
 
-**Session:** TASK-002 shipped (P + L, first full delegation cycle complete)
+**Session:** hotfixing live incident — opencode invocation went silent on first real wake
 
 ---
 
@@ -38,7 +38,10 @@
 ## Pending
 
 - [ ] **User restarts the watcher on the local machine with merged code** — `git pull && python3 scripts/watch.py` (first run can be `--dry-run` to watch it process pings)
-- [ ] Live wake test after cursor hotfix: P sends a real ping → opencode invokes on User's machine
+- [ ] **Hotfix `32cf7dc` (watch.py) not yet on User's machine** — no PAT in P's sandbox this session (previous token lost to context compaction + was due for rotation anyway). Two local commits await push (`183dca1` audit, `32cf7dc` fix). Interim: User applies `watcher-hotfix-32cf7dc.patch` from the chat download, or pastes a fresh fine-grained PAT and P pushes + User `git pull`.
+- [ ] **User: kill any orphaned opencode** from the 00:33 silent invocation before restarting the watcher (`pgrep -fa opencode`, kill the tree)
+- [ ] Live wake test REDO after hotfix lands: restart watcher → it replays the 05:33 `status` ping from cursor → this time opencode output streams live as `[oc:out]`/`[oc:err]` lines with 60s heartbeats; 900s cap
+- [ ] Verify opencode non-interactive health on User machine: `opencode run "reply with exactly: bridge alive"` — if this hangs/errors, the problem is opencode config (provider/auth), not the bridge
 - [ ] End-to-end live test: P sends a real `new-task` ping → watcher wakes → opencode acts on L's machine (the loop runs with no manual relay)
 - [ ] Proposed **TASK-003** (awaiting User approval): deploy watcher as a persistent service with auto-restart (cron/systemd/launchd) + GitHub poll fallback for ntfy outages
 - [ ] User added as collaborator to ulp-bridge repo (bootstrap token lacked permission — revisit if still needed)
@@ -51,6 +54,8 @@
 - No GitHub polling fallback yet (ntfy stream only — pings lost if ntfy is down)
 - No CI/CD pipeline yet (lightweight resource constraints)
 - P and L share the `a4mula` account, so formal GitHub review events are impossible — PR comments are the review channel
+- Cursor saves BEFORE processing (at-least-once delivery): a restart re-processes the last ping — wake-ups are idempotent, benign, but expected
+- opencode runs in its own process group with stdin=/dev/null and a 900s cap (`ULP_OC_TIMEOUT` env) — long local-model tasks: raise the env var, don't lower the cap below ~300s
 
 ---
 
