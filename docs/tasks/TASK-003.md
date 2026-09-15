@@ -137,6 +137,35 @@ runs). If time remains, proceed to wave 2 in the same wake.
 On any blocker: commit what works, ping `blocked` with the ref, describe
 the blocker in the PR.
 
+### Auth notes (robb-dev)
+
+1. Before starting work: `cd /mnt/data-tier/projects/ulp-bridge && git
+   pull --ff-only origin main` so the spec you are reading is the latest
+   revision.
+2. If `git push` fails on the clone's stored credentials, use the
+   machine-local token (lives at `~/.ulp/gh-token`, mode 600 — NEVER
+   print it, NEVER commit it, NEVER put it in the remote URL of a
+   tracked file):
+
+   ```
+   TOKEN=$(cat ~/.ulp/gh-token)
+   git push https://x-access-token:${TOKEN}@github.com/a4mula/ulp-bridge.git task-003-persistent-watcher
+   ```
+
+3. Draft PR via the REST API with the same token (`gh` CLI may not be
+   installed):
+
+   ```
+   curl -s -X POST -H "Authorization: Bearer $TOKEN" \
+     -H "Accept: application/vnd.github+json" \
+     https://api.github.com/repos/a4mula/ulp-bridge/pulls \
+     -d '{"title":"[TASK-003] Persistent watcher service + GitHub polling fallback","head":"task-003-persistent-watcher","base":"main","draft":true,"body":"Closes #4\n\nWave 1: systemd user service (Part A).\nWave 2: GitHub polling fallback (Part B)."}'
+   ```
+
+4. If `~/.ulp/gh-token` is missing or empty: skip steps 2–3, commit your
+   work locally, and ping `blocked` with the reason — the User is placing
+   the token; a later wake (replayed or fresh ping) will succeed.
+
 ## Acceptance criteria
 
 - [ ] `systemctl --user is-enabled ulp-watcher` → `enabled`; `is-active` → `active`
