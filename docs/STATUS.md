@@ -43,7 +43,7 @@
 - [x] **LIVE WAKE TEST PASSED (2026-09-15T06:15:00Z)** — ping `nE8GUWZAbeE1` (06:13:12Z) → watcher invoked opencode in 0.3s → agentic run (git log/show/diff, 108s total, rc=0) → L posted structured review of commit 32cf7dc and acknowledged. First fully observable, hands-off P→L cycle. Watcher returned to idle cleanly after processing
 - [x] User: pull + restart done (single clean watcher; old instances swept; clone at `/mnt/data-tier/projects/ulp-bridge`)
 - [ ] End-to-end live test: P sends a real `new-task` ping → watcher wakes → opencode acts on L's machine (the loop runs with no manual relay)
-- [ ] Awaiting User decision: approve **TASK-003** (persistent watcher service + GitHub poll fallback) — currently the watcher only runs while a User terminal is open; closing it silences the bridge
+- [ ] **TASK-003 DELEGATED** (User approved): issue #4 + spec `docs/tasks/TASK-003.md`, new-task ping `EIPdOGhmjaHW` sent 06:22Z. Wave 1 = systemd user service (watch for `pr-ready` ping). Watcher wake budget for this run: 900s (service will self-configure 1800s for future runs)
 - [ ] User added as collaborator to ulp-bridge repo (bootstrap token lacked permission — revisit if still needed)
 
 ---

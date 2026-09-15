@@ -144,3 +144,11 @@ Delivery: wave 1 = systemd user service (draft PR + pr-ready ping),
           wave 2 = GitHub polling fallback (timer + poll_github.py)
 new-task ping follows once this push lands
   ```
+
+
+## 2026-09-15T06:22:40Z
+
+new-task → issue:4  (sent by P — TASK-003 delegated; spec e4338e52 on main; ntfy id EIPdOGhmjaHW)
+  ```
+{"v":1,"from":"cloud","type":"new-task","ref":"issue:4","ts":"2026-09-15T06:22:14Z"}
+  ```
