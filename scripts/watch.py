@@ -115,15 +115,22 @@ def _resolve_opencode_bin() -> Optional[Path]:
 
 
 def _post_blocked_ping(ref: str) -> None:
-    """POST a blocked ping via ping.sh."""
+    """POST a blocked ping via ping.sh.
+
+    Ensures the ref is normalised to 'issue:N' form if it contains a colon
+    but doesn't already start with 'issue:', then passes it unchanged.
+    """
     ping_script = Path(__file__).resolve().parent / "ping.sh"
     if not ping_script.exists():
         log.error(f"ping.sh not found at {ping_script}")
         return
 
+    if not ref.startswith("issue:"):
+        ref = f"issue:{ref}"
+
     try:
         subprocess.run(
-            ["bash", str(ping_script), "blocked", f"issue:{ref.replace('issue:', '').replace('issue', '') if ':' in ref and not ref.startswith('issue:') else ref}"],
+            ["bash", str(ping_script), "blocked", ref],
             capture_output=True,
             text=True,
             timeout=30,
@@ -155,7 +162,7 @@ def invoke_opencode(ref: str, message: str, dry_run: bool = False) -> bool:
 
     try:
         result = subprocess.run(
-            [str(opencode_bin), prompt],
+            [str(opencode_bin), "run", prompt],
             capture_output=True,
             text=True,
             timeout=120,
