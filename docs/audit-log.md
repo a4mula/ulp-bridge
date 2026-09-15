@@ -93,3 +93,17 @@ deploy notes (logged by P) — hotfix live on GitHub, User deployment pending
 - Awaiting: User git pull + watcher restart; watcher will replay 05:33 +
   05:58 pings (at-least-once cursor semantics) as the live retest
   ```
+
+## 2026-09-15T06:00:05Z
+
+blocked → issue:commit:32cf7dc  (RECEIVED by P from L's old-code watcher — user clone at /mnt/data-tier/projects/ulp-bridge consumed the 05:58 ping before restarting; opencode timed out at exactly 120s per old code; mangled ref fingerprints pre-pull version. First fully relay-free L→P failure report. Ref mangling expected in old code, fixed in 32cf7dc)
+  ```
+{"v":1,"from":"local","type":"blocked","ref":"issue:commit:32cf7dc","ts":"2026-09-15T06:00:05Z"}
+  ```
+
+## 2026-09-15T06:13:12Z
+
+status → commit:32cf7dc  (sent by P — live wake test against SINGLE clean patched watcher; ntfy id nE8GUWZAbeE1; User confirmed old instances killed via pkill before this send)
+  ```
+{"v":1,"from":"cloud","type":"status","ref":"commit:32cf7dc","ts":"2026-09-15T06:13:12Z"}
+  ```
