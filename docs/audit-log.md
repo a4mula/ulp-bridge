@@ -34,3 +34,10 @@ status → commit:0479cc7  (sent by P — PR #3 squash-merged, issue #2 closed)
   ```
 {"v":1,"from":"cloud","type":"status","ref":"commit:0479cc7","ts":"2026-09-15T05:19:18Z"}
   ```
+
+## 
+
+status → commit:dbfdfcd  (sent by P — LIVE wake test to running watcher)
+  ```
+' + json.dumps(payload) + '
+  ```
