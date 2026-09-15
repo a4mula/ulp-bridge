@@ -69,3 +69,27 @@ post-kill path. Verified vs fake-opencode: ok/fail/hang-with-pipe-child
 (kill at 5s exact, zero strays). Old-code stray reproduction: kill(parent)
 orphaned the pipe-holding child (ps-verified).
   ```
+
+## 2026-09-15T05:58:05Z
+
+status → commit:32cf7dc  (sent by P — hotfix pushed to origin/main 920af6c; fresh wake ping for patched watcher; ntfy id 6dGEU86kHQci)
+  ```
+{"v":1,"from":"cloud","type":"status","ref":"commit:32cf7dc","ts":"2026-09-15T05:58:05Z"}
+  ```
+
+## 2026-09-15T05:58:40Z
+
+deploy notes (logged by P) — hotfix live on GitHub, User deployment pending
+
+  ```
+- Fresh fine-grained PAT received from User; stored at ~/.ulp/gh-token
+  (mode 600, OUTSIDE the repo tree — never committed; token absent from
+  all docs, commits, and exported patches per User's explicit requirement)
+- Pushed 183dca1..920af6c to origin/main (fast-forward, verified ls-remote)
+- User machine report: 2 orphaned /snap/opencode/217/bin/opencode procs
+  from the 00:33 incident found via pgrep and killed; opencode run sanity
+  test PASSED ("bridge alive", model line: build · qwen-35b-moe) =>
+  opencode + provider healthy; incident was watcher-side observability only
+- Awaiting: User git pull + watcher restart; watcher will replay 05:33 +
+  05:58 pings (at-least-once cursor semantics) as the live retest
+  ```

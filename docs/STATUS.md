@@ -38,10 +38,9 @@
 ## Pending
 
 - [ ] **User restarts the watcher on the local machine with merged code** — `git pull && python3 scripts/watch.py` (first run can be `--dry-run` to watch it process pings)
-- [ ] **Hotfix `32cf7dc` (watch.py) not yet on User's machine** — no PAT in P's sandbox this session (previous token lost to context compaction + was due for rotation anyway). Two local commits await push (`183dca1` audit, `32cf7dc` fix). Interim: User applies `watcher-hotfix-32cf7dc.patch` from the chat download, or pastes a fresh fine-grained PAT and P pushes + User `git pull`.
-- [ ] **User: kill any orphaned opencode** from the 00:33 silent invocation before restarting the watcher (`pgrep -fa opencode`, kill the tree)
-- [ ] Live wake test REDO after hotfix lands: restart watcher → it replays the 05:33 `status` ping from cursor → this time opencode output streams live as `[oc:out]`/`[oc:err]` lines with 60s heartbeats; 900s cap
-- [ ] Verify opencode non-interactive health on User machine: `opencode run "reply with exactly: bridge alive"` — if this hangs/errors, the problem is opencode config (provider/auth), not the bridge
+- [x] Fresh PAT received → hotfix pushed to `origin/main` = `920af6c` (2026-09-15T05:57Z). Token stored OUTSIDE the repo tree (`~/.ulp/gh-token`, mode 600) — never committed, never enters docs/patches
+- [x] User machine findings: 2 orphaned opencode procs from the 00:33 incident found + killed; `opencode run` sanity test PASSED (`bridge alive` via qwen-35b-moe) — opencode itself healthy, silence was purely the watcher's swallowed output
+- [ ] **User: pull + restart watcher** (their clone is wherever `scripts/watch.py` lived — NOT `~/ulp-bridge`). Note: `docs/audit-log.md` is likely dirty with watcher receipt entries → `cp docs/audit-log.md /tmp/audit-bak.md`, `git checkout -- docs/audit-log.md`, `git pull` — expect replay of the 05:33 ping AND the new 05:58 ping (`commit:32cf7dc`, ntfy id `6dGEU86kHQci`), now with live `[oc:*]` streaming + heartbeats
 - [ ] End-to-end live test: P sends a real `new-task` ping → watcher wakes → opencode acts on L's machine (the loop runs with no manual relay)
 - [ ] Proposed **TASK-003** (awaiting User approval): deploy watcher as a persistent service with auto-restart (cron/systemd/launchd) + GitHub poll fallback for ntfy outages
 - [ ] User added as collaborator to ulp-bridge repo (bootstrap token lacked permission — revisit if still needed)
@@ -61,6 +60,6 @@
 
 ## Next Steps
 
-1. User restarts the watcher locally (merged code)
+1. User pulls `920af6c`, restarts watcher, confirms live `[oc:*]` output on the replayed pings
 2. P delegates a small live test task; the full P → ntfy → watcher → opencode → PR → P loop runs hands-off
 3. On User approval: TASK-003 (persistent watcher + poll fallback)
