@@ -24,4 +24,6 @@ new-task → issue:2  (sent by P — ntfy id 1kBaNLjGLwGE)
 ## 2026-09-15T05:08:55Z
 
 review → pr:3  (sent by P — review comment id 5675066281, 2 changes requested)
-  
+  ```
+{"v":1,"from":"cloud","type":"review","ref":"pr:3","ts":"2026-09-15T05:08:55Z"}
+  ```
